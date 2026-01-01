@@ -45,7 +45,10 @@ env:
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
   MACOS_P12_BASE64: "${{ secrets.MACOS_P12_BASE64 }}"
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
-  SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}-2"
+  SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
+  # Server IP and Key
+  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER}}"
+  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY}}"
 
 jobs:
   generate-bridge:
@@ -162,6 +165,18 @@ jobs:
           fi
           head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
         shell: bash
+      
+      - name: set server
+        if: env.RENDEZVOUS_SERVER != null
+        shell: bash
+        run: |
+          sed -i -e 's|rs-ny.rustdesk.com|${{ env.RENDEZVOUS_SERVER }}|' ./libs/hbb_common/src/config.rs
+
+      - name: set key
+        if: env.RS_PUB_KEY != null
+        shell: bash
+        run: |
+          sed -i -e 's|OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=|${{ env.RS_PUB_KEY }}|' ./libs/hbb_common/src/config.rs
 
       - name: Build rustdesk
         run: |
@@ -286,7 +301,7 @@ jobs:
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     runs-on: ${{ matrix.job.os }}
     # Temporarily disable this action due to additional test is needed.
-    # if: false
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -433,7 +448,8 @@ jobs:
             ./SignOutput/rustdesk-*.exe
 
   build-rustdesk-ios:
-    if: ${{ inputs.upload-artifact }}
+    if: false
+    #if: ${{ inputs.upload-artifact }}
     name: build rustdesk ios ipa
     runs-on: ${{ matrix.job.os }}
     needs: [generate-bridge]
@@ -710,6 +726,18 @@ jobs:
           cargo -V
           rustc -V
 
+      - name: set server
+        if: env.RENDEZVOUS_SERVER != null
+        shell: bash
+        run: |
+          sed -i -e 's|rs-ny.rustdesk.com|${{ env.RENDEZVOUS_SERVER }}|' ./libs/hbb_common/src/config.rs
+
+      - name: set key
+        if: env.RS_PUB_KEY != null
+        shell: bash
+        run: |
+          sed -i -e 's|OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=|${{ env.RS_PUB_KEY }}|' ./libs/hbb_common/src/config.rs
+
       - name: Build rustdesk
         run: |
           if [ "${{ matrix.job.target }}" = "aarch64-apple-darwin" ]; then
@@ -774,7 +802,7 @@ jobs:
     needs:
       - build-for-macOS
       - build-for-windows-flutter
-      - build-for-windows-sciter
+      #- build-for-windows-sciter
     runs-on: ubuntu-latest
     if: ${{ inputs.upload-artifact }}
     steps:
@@ -796,15 +824,16 @@ jobs:
           name: rustdesk-unsigned-windows-x86_64
           path: ./windows-x86_64/
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@master
-        with:
-          name: rustdesk-unsigned-windows-x86
-          path: ./windows-x86/
+      # - name: Download Artifacts
+      #   uses: actions/download-artifact@master
+      #   with:
+      #     name: rustdesk-unsigned-windows-x86
+      #     path: ./windows-x86/
 
       - name: Combine unsigned app
         run: |
-          tar czf rustdesk-${{ env.VERSION }}-unsigned.tar.gz *.dmg windows-x86_64 windows-x86
+          # tar czf rustdesk-${{ env.VERSION }}-unsigned.tar.gz *.dmg windows-x86_64 windows-x86
+          tar czf rustdesk-${{ env.VERSION }}-unsigned.tar.gz *.dmg windows-x86_64
 
       - name: Publish unsigned app
         uses: softprops/action-gh-release@v1
@@ -814,6 +843,7 @@ jobs:
           files: rustdesk-${{ env.VERSION }}-unsigned.tar.gz
 
   build-rustdesk-android:
+    if: false
     needs: [generate-bridge]
     name: build rustdesk android apk ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
@@ -1106,9 +1136,10 @@ jobs:
             signed-apk/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
 
   build-rustdesk-android-universal:
+    if: false
     needs: [build-rustdesk-android]
     name: build rustdesk android universal apk
-    if: ${{ inputs.upload-artifact }}
+    # if: ${{ inputs.upload-artifact }}
     runs-on: ubuntu-24.04
     env:
       reltype: release
@@ -1409,6 +1440,18 @@ jobs:
           name: bridge-artifact
           path: ./
 
+      - name: set server
+        if: env.RENDEZVOUS_SERVER != null
+        shell: bash
+        run: |
+          sed -i -e 's|rs-ny.rustdesk.com|${{ env.RENDEZVOUS_SERVER }}|' ./libs/hbb_common/src/config.rs
+
+      - name: set key
+        if: env.RS_PUB_KEY != null
+        shell: bash
+        run: |
+          sed -i -e 's|OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=|${{ env.RS_PUB_KEY }}|' ./libs/hbb_common/src/config.rs
+
       - uses: rustdesk-org/run-on-arch-action@amd64-support
         name: Build rustdesk
         id: vcpkg
@@ -1692,6 +1735,18 @@ jobs:
         run: |
           RUST_TOOLCHAIN_VERSION=$(cargo --version | awk '{print $2}')
           echo "RUST_TOOLCHAIN_VERSION=$RUST_TOOLCHAIN_VERSION" >> $GITHUB_ENV
+
+      - name: set server
+        if: env.RENDEZVOUS_SERVER != null
+        shell: bash
+        run: |
+          sed -i -e 's|rs-ny.rustdesk.com|${{ env.RENDEZVOUS_SERVER }}|' ./libs/hbb_common/src/config.rs
+
+      - name: set key
+        if: env.RS_PUB_KEY != null
+        shell: bash
+        run: |
+          sed -i -e 's|OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=|${{ env.RS_PUB_KEY }}|' ./libs/hbb_common/src/config.rs
 
       - uses: rustdesk-org/run-on-arch-action@amd64-support
         name: Build rustdesk sciter binary for ${{ matrix.job.arch }}
