@@ -47,8 +47,8 @@ env:
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
   # Server IP and Key
-  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER}}"
-  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY}}"
+  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
+  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
 
 jobs:
   generate-bridge:
